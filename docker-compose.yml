@@ -1,9 +1,12 @@
-version: "3"
+version: "3.9"
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - kafka-net
 
   kafka1:
     image: confluentinc/cp-kafka:7.5.0
@@ -16,6 +19,8 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - kafka-net
 
   kafka2:
     image: confluentinc/cp-kafka:7.5.0
@@ -26,6 +31,8 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - kafka-net
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -35,3 +42,50 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - kafka-net
+
+  minio:
+    image: bitnami/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=adminadmin!!
+      - MINIO_DEFAULT_BUCKETS=default
+    command: server /data --console-address ":9001"
+    networks:
+      - kafka-net
+
+  producer:
+    build: ./producer
+    depends_on:
+      - kafka1
+    networks:
+      - kafka-net
+
+  consumer1:
+    build: ./consumer1
+    depends_on:
+      - kafka1
+      - minio
+    networks:
+      - kafka-net
+
+  consumer2:
+    build: ./consumer2
+    depends_on:
+      - kafka1
+      - minio
+    networks:
+      - kafka-net
+
+networks:
+  kafka-net:
+
+volumes:
+  minio_data:
+    driver: local

@@ -1,4 +1,4 @@
-id,name,age
-1,Olena,22
-2,Andriy,25
-3,Ivan,28
+id,name,age,date
+1,Olena,22,2020-04-15
+2,Andriy,25,2020-04-30
+3,Ivan,28,2020-05-01
